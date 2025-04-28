@@ -6,9 +6,16 @@ const Navbar = () => {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="bg-gray-500 text-white p-4 shadow-md sticky top-0 z-50">
+    <nav className="bg-gray-800 text-white p-4 shadow-md sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold">BOOK STORE</Link>
+        <Link to="/" className="flex items-center space-x-2">
+          <img 
+            src="/images/logo.png" 
+            alt="Logo Book Store" 
+            className="h-10 w-10 object-contain" 
+          />
+          <span className="text-2xl font-bold">BOOK STORE</span>
+        </Link>
         
         <div className="flex items-center space-x-6">
           <Link to="/" className="hover:underline hidden md:block">Inicio</Link>
@@ -19,7 +26,7 @@ const Navbar = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                Mi Perfil
+                Perfil
               </Link>
               <button 
                 onClick={logout}
@@ -47,4 +54,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;  
+export default Navbar;
