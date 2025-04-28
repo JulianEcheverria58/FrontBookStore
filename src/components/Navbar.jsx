@@ -8,7 +8,7 @@ const Navbar = () => {
   return (
     <nav className="bg-gray-500 text-white p-4 shadow-md sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold">JE BOOK STORE</Link>
+        <Link to="/" className="text-2xl font-bold">BOOK STORE</Link>
         
         <div className="flex items-center space-x-6">
           <Link to="/" className="hover:underline hidden md:block">Inicio</Link>
