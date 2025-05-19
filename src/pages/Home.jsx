@@ -1,37 +1,35 @@
-import { useState } from 'react';
-import BookSearch from '../components/BookSearch';
-import BookFilter from '../components/BookFilter';
+import React, { useState } from 'react';
+import BookFilters from '../components/BookFilter';
 import BookList from '../components/BookList';
+import BookSearch from '../components/BookSearch';
 
 const Home = () => {
-  const [filters, setFilters] = useState({
-    genre: 'all',
-    priceRange: 'all',
-    author: '',
-    publicationDate: '',
-    searchQuery: ''
-  });
+  const [filters, setFilters] = useState({});
+
+  const handleFilterChange = (type, value) => {
+    if (type === 'clear') {
+      setFilters({});
+    } else {
+      setFilters(prev => ({ ...prev, [type]: value === 'all' ? undefined : value }));
+    }
+  };
 
   const handleSearch = (query) => {
-    setFilters(prev => ({
-      ...prev,
-      searchQuery: query
-    }));
+    setFilters(prev => ({ ...prev, searchQuery: query }));
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">     
-      <div className="w-full md:w-64 lg:w-80 bg-gray-50 p-4 border-r">
-        <div className="sticky top-4">
-          <h2 className="text-xl font-bold mb-4">Filters</h2>
-          <BookFilter filters={filters} setFilters={setFilters} />
+    <div className="container mx-auto px-4 py-8">
+      <BookSearch onSearch={handleSearch} />
+      
+      <div className="flex flex-col md:flex-row gap-8 mt-6">
+        <div className="md:w-1/4">
+          <BookFilters filters={filters} onFilterChange={handleFilterChange} />
         </div>
-      </div>
-
-   
-      <div className="flex-1 p-4">       
-        <BookSearch onSearch={handleSearch} />
-        <BookList filters={filters} />
+        
+        <div className="md:w-3/4">
+          <BookList filters={filters} />
+        </div>
       </div>
     </div>
   );

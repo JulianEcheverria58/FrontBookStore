@@ -1,28 +1,25 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Simular usuario con balance
-    setUser({
-      name: "Julian Echeverria",
-      email: "julianecheverria525@gmail.com",
-      balance: 550000 
-    });
-  }, []);
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
 
-  const updateBalance = (amount) => {
-    setUser(prev => ({
-      ...prev,
-      balance: prev.balance - amount
-    }));
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, updateBalance }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

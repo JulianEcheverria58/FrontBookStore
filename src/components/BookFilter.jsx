@@ -1,90 +1,80 @@
-const BookFilter = ({ filters, setFilters }) => {
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+import React from 'react';
+
+const BookFilters = ({ onFilterChange, filters }) => {
+  const genres = ['Fantasy', 'Magical Realism', 'Dystopian', 'Classic', 'Epic Poetry'];
+  const priceRanges = [
+    { label: 'All Prices', value: 'all' },
+    { label: '$0 - $20,000', value: '0-20000' },
+    { label: '$20,000 - $40,000', value: '20000-40000' },
+    { label: '$40,000+', value: '40000-1000000' }
+  ];
+
+  const years = [
+    { label: 'All Years', value: 'all' },
+    { label: 'Before 2000', value: '0-1999' },
+    { label: '2000-2010', value: '2000-2010' },
+    { label: '2011-2020', value: '2011-2020' },
+    { label: '2021+', value: '2021-2030' }
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Filtro por Género */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
+    <div className="bg-white p-6 rounded-lg shadow-md sticky top-20 z-20">
+      <h3 className="font-bold text-lg mb-4">Filters</h3>
+      
+      <div className="mb-6">
+        <h4 className="font-medium mb-2">Genre</h4>
         <select
-          name="genre"
+          className="w-full p-2 border rounded"
           value={filters.genre || 'all'}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          onChange={(e) => onFilterChange('genre', e.target.value)}
         >
           <option value="all">All Genres</option>
-          <option value="fantasy">Fantasy</option>
-          <option value="magical realism">Magical Realism</option>
-          <option value="scifi">Science Fiction</option>
-          <option value="romance">Romance</option>
-          <option value="dystopian">Dystopian</option>
+          {genres.map(genre => (
+            <option key={genre} value={genre}>{genre}</option>
+          ))}
         </select>
       </div>
 
-      {/* Filtro por Precio */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+      <div className="mb-6">
+        <h4 className="font-medium mb-2">Price Range</h4>
         <select
-          name="priceRange"
+          className="w-full p-2 border rounded"
           value={filters.priceRange || 'all'}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          onChange={(e) => onFilterChange('priceRange', e.target.value)}
         >
-          <option value="all">All Prices</option>
-          <option value="30000-40000">$30,000 - $40,000</option>
-          <option value="40000-50000">$40,000 - $50,000</option>
-          <option value="50000-60000">$50,000 - $60,000</option>
+          {priceRanges.map(range => (
+            <option key={range.value} value={range.value}>{range.label}</option>
+          ))}
         </select>
       </div>
 
-      {/* Filtro por Autor */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+      <div className="mb-6">
+        <h4 className="font-medium mb-2">Author</h4>
         <input
           type="text"
-          name="author"
           placeholder="Filter by author"
+          className="w-full p-2 border rounded"
           value={filters.author || ''}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          onChange={(e) => onFilterChange('author', e.target.value)}
         />
       </div>
 
-      {/* Filtro por Año */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Publication Year</label>
+      <div className="mb-6">
+        <h4 className="font-medium mb-2">Publication Year</h4>
         <select
-          name="year"
+          className="w-full p-2 border rounded"
           value={filters.year || 'all'}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          onChange={(e) => onFilterChange('year', e.target.value)}
         >
-          <option value="all">All Years</option>
-          <option value="1950-1959">1950s </option>
-          <option value="1960-1969">1960s </option>
-          <option value="1990-1999">1990s </option>
-          <option value="2000-2010">2000s </option>
-          <option value="2010-2020">2010s </option>
-          <option value="2020-2030">2020s </option>
-          </select>
+          {years.map(year => (
+            <option key={year.value} value={year.value}>{year.label}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Botón para limpiar filtros */}
       <button
-        onClick={() => setFilters({
-          genre: 'all',
-          priceRange: 'all',
-          author: '',
-          year: 'all',
-          searchQuery: filters.searchQuery // Mantenemos la búsqueda
-        })}
-        className="w-full mt-4 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        onClick={() => onFilterChange('clear')}
+        className="w-full py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium"
       >
         Clear Filters
       </button>
@@ -92,4 +82,4 @@ const BookFilter = ({ filters, setFilters }) => {
   );
 };
 
-export default BookFilter;
+export default BookFilters;

@@ -1,70 +1,143 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getProfile, updateProfile, rechargeBalance } from '../api/userApi';
+import { useAuth } from '../contexts/AuthContext';
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState({
     name: '',
+    email: '',
+    phone: '',
     city: '',
     country: '',
     age: '',
     gender: '',
     profession: '',
     balance: 0,
-    membershipNumber: 'LIB-' + Math.floor(100000 + Math.random() * 900000)
+    membershipStatus: 'Active',
+    membershipNumber: 'LIB-' + Math.floor(100000 + Math.random() * 900000),
+    membershipStartDate: new Date().toLocaleDateString()
   });
 
   const [rechargeAmount, setRechargeAmount] = useState(50000);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
-  // Simular carga de datos del usuario
+  // Cargar datos del usuario
   useEffect(() => {
-    // API datos del usuario
     const fetchUserData = async () => {
-      // const data = await userService.getProfile();
-      const mockData = {
-        name: 'Julian Echeverria',
-        city: 'Bogotá',
-        country: 'Colombia',
-        age: 32,
-        gender: 'Masculino',
-        profession: 'Ingeniero',
-        balance: 500000
-      };
-      setUserData(prev => ({ ...prev, ...mockData }));
+      try {
+        setLoading(true);
+        const data = await getProfile();
+        
+        setUserData({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          city: data.city || 'Bogotá', // Valor por defecto
+          country: data.country || 'Colombia', // Valor por defecto
+          age: data.age || '',
+          gender: data.gender || 'Masculino', // Valor por defecto
+          profession: data.profession || '',
+          balance: data.membershipBalance || 0,
+          membershipStatus: data.membershipStatus || 'Active',
+          membershipNumber: data.membershipNumber || 'LIB-' + Math.floor(100000 + Math.random() * 900000),
+          membershipStartDate: data.membershipStartDate ? new Date(data.membershipStartDate).toLocaleDateString() : new Date().toLocaleDateString()
+        });
+        
+        setError('');
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        setError('Error al cargar el perfil. Por favor intenta nuevamente.');
+        if (err.response?.status === 401) {
+          logout();
+          navigate('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
     };
     
     fetchUserData();
-  }, []);
+  }, [logout, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    // llamada a la API para guardar los cambios
-    console.log('Datos guardados:', userData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const updatedData = {
+        name: userData.name,
+        phone: userData.phone,
+        city: userData.city,
+        country: userData.country,
+        age: userData.age,
+        gender: userData.gender,
+        profession: userData.profession
+      };
+      
+      await updateProfile(updatedData);
+      setIsEditing(false);
+      setError('');
+      alert('Perfil actualizado exitosamente');
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setError('Error al actualizar el perfil. Por favor intenta nuevamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRecharge = () => {
+  const handleRecharge = async () => {
     if (rechargeAmount < 50000 || rechargeAmount > 200000) {
-      alert('El monto debe estar entre $50.000 y $200.000');
+      setError('El monto debe estar entre $50.000 y $200.000');
       return;
     }
     
-    // Simular recarga
-    setUserData(prev => ({
-      ...prev,
-      balance: prev.balance + rechargeAmount
-    }));
-    alert(`Recarga exitosa por $${rechargeAmount.toLocaleString()}`);
+    try {
+      setLoading(true);
+      const { newBalance } = await rechargeBalance(rechargeAmount);
+      
+      setUserData(prev => ({
+        ...prev,
+        balance: newBalance
+      }));
+      
+      setError('');
+      alert(`Recarga exitosa por $${rechargeAmount.toLocaleString()}`);
+    } catch (err) {
+      console.error('Error recharging balance:', err);
+      setError(err.response?.data?.error || 'Error al recargar saldo. Por favor intenta nuevamente.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Mi Perfil</h1>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+        </div>
+      )}
       
       <div className="grid md:grid-cols-3 gap-8">
         {/* Tarjeta de Membresía */}
@@ -73,10 +146,14 @@ const ProfilePage = () => {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold">Library Premium</h2>
-                <p className="text-blue-200">Miembro desde: 01/2025</p>
+                <p className="text-blue-200">Miembro desde: {userData.membershipStartDate}</p>
               </div>
-              <div className="bg-white text-blue-800 px-3 py-1 rounded-full text-sm font-bold">
-                Activa
+              <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                userData.membershipStatus === 'Active' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {userData.membershipStatus}
               </div>
             </div>
             
@@ -106,6 +183,7 @@ const ProfilePage = () => {
                 value={rechargeAmount}
                 onChange={(e) => setRechargeAmount(Number(e.target.value))}
                 className="w-full p-3 border rounded-lg"
+                disabled={loading}
               />
               <p className="text-sm text-gray-500 mt-1">
                 Mínimo $50.000 - Máximo $200.000
@@ -113,9 +191,12 @@ const ProfilePage = () => {
             </div>
             <button
               onClick={handleRecharge}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold"
+              disabled={loading}
+              className={`w-full py-3 rounded-lg font-bold ${
+                loading ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
+              } text-white`}
             >
-              Recargar ${rechargeAmount.toLocaleString()}
+              {loading ? 'Procesando...' : `Recargar $${rechargeAmount.toLocaleString()}`}
             </button>
           </div>
         </div>
@@ -129,12 +210,16 @@ const ProfilePage = () => {
                 <div className="space-x-2">
                   <button
                     onClick={handleSave}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                    disabled={loading}
+                    className={`px-4 py-2 rounded ${
+                      loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white`}
                   >
-                    Guardar
+                    {loading ? 'Guardando...' : 'Guardar'}
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
+                    disabled={loading}
                     className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
                   >
                     Cancelar
@@ -160,9 +245,31 @@ const ProfilePage = () => {
                     value={userData.name}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
+                    disabled={loading}
                   />
                 ) : (
                   <p className="p-3 border-b">{userData.name}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Email</label>
+                <p className="p-3 border-b">{userData.email}</p>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Teléfono</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="phone"
+                    value={userData.phone}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border rounded-lg"
+                    disabled={loading}
+                  />
+                ) : (
+                  <p className="p-3 border-b">{userData.phone}</p>
                 )}
               </div>
 
@@ -175,6 +282,7 @@ const ProfilePage = () => {
                     value={userData.city}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
+                    disabled={loading}
                   />
                 ) : (
                   <p className="p-3 border-b">{userData.city}</p>
@@ -190,6 +298,7 @@ const ProfilePage = () => {
                     value={userData.country}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
+                    disabled={loading}
                   />
                 ) : (
                   <p className="p-3 border-b">{userData.country}</p>
@@ -205,6 +314,7 @@ const ProfilePage = () => {
                     value={userData.age}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
+                    disabled={loading}
                   />
                 ) : (
                   <p className="p-3 border-b">{userData.age}</p>
@@ -219,6 +329,7 @@ const ProfilePage = () => {
                     value={userData.gender}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
+                    disabled={loading}
                   >
                     <option value="Masculino">Masculino</option>
                     <option value="Femenino">Femenino</option>
@@ -239,6 +350,7 @@ const ProfilePage = () => {
                     value={userData.profession}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
+                    disabled={loading}
                   />
                 ) : (
                   <p className="p-3 border-b">{userData.profession}</p>

@@ -40,6 +40,7 @@ const CheckoutPage = () => {
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
       
       <div className="grid md:grid-cols-3 gap-8">
+        
         {/* Información del pedido */}
         <div className="md:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-sm mb-6">

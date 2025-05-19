@@ -32,11 +32,11 @@ const RegisterPage = () => {
     }
 
     try {
-      // API de registro
+      // Aquí iría la llamada a tu API de registro
       // const response = await authService.register(formData);
       console.log('Register data:', formData);
       
-      // Simulamos registro exitoso
+      // Simulamos un registro exitoso
       navigate('/login'); // Redirige a login después del registro
     } catch (err) {
       setError(err.message || 'Registration failed');
