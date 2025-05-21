@@ -18,22 +18,22 @@ const Navbar = () => {
 
         {/* Derecha: Botones + Carrito */}
         <div className="flex items-center space-x-4">
-          <Link to="/" className="hover:text-blue-400">Inicio</Link>
+          <Link to="/" className="hover:text-blue-400">Home</Link>
 
           {user ? (
             <>
-              <span className="text-white">Hola, {user.name}</span>
-              <Link to="/profile" className="hover:text-blue-400">Perfil</Link>
+              <span className="text-white">Hello, {user.name}</span>
+              <Link to="/profile" className="hover:text-blue-400">Profile</Link>
               <button 
                 onClick={logout}
                 className="hover:text-blue-400"
               >
-                Cerrar sesión
+                Sign out
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="hover:text-blue-400">Iniciar sesión</Link>
+              <Link to="/login" className="hover:text-blue-400">login</Link>
               <Link to="/register" className="hover:text-blue-400">Registrarse</Link>
             </>
           )}

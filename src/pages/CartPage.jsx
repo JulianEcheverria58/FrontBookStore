@@ -7,12 +7,12 @@ const CartPage = () => {
   if (cartItems.length === 0) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
+        <h2 className="text-2xl font-bold mb-4">Tu carrito está vacío</h2>
         <Link 
           to="/" 
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
-          Continue Shopping
+          Continuar comprando
         </Link>
       </div>
     );
@@ -20,10 +20,9 @@ const CartPage = () => {
 
   return (
     <div className="container mx-auto p-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Your Shopping Cart</h1>
+      <h1 className="text-3xl font-bold mb-8">Tu Carrito de Compras</h1>
       
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Lista de productos */}
         <div className="md:col-span-2">
           {cartItems.map(item => (
             <div key={item.id} className="border-b py-6 flex flex-col md:flex-row gap-4">
@@ -43,6 +42,7 @@ const CartPage = () => {
                   <button 
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     className="px-2 py-1 bg-gray-200 rounded-l"
+                    disabled={item.quantity <= 1}
                   >
                     -
                   </button>
@@ -62,7 +62,7 @@ const CartPage = () => {
                 onClick={() => removeFromCart(item.id)}
                 className="self-start md:self-center text-red-500 hover:text-red-700"
               >
-                Remove
+                Eliminar
               </button>
             </div>
           ))}
@@ -72,29 +72,28 @@ const CartPage = () => {
               onClick={clearCart}
               className="text-red-500 hover:text-red-700"
             >
-              Clear Entire Cart
+              Vaciar carrito
             </button>
             
             <Link 
               to="/checkout" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
             >
-              Proceed to Checkout
+              Finalizar Compra
             </Link>
           </div>
         </div>
         
-        {/* Resumen del pedido */}
         <div className="bg-gray-50 p-6 rounded-lg h-fit sticky top-4">
-          <h3 className="text-xl font-bold mb-4">Order Summary</h3>
+          <h3 className="text-xl font-bold mb-4">Resumen del Pedido</h3>
           <div className="space-y-3 mb-6">
             <div className="flex justify-between">
               <span>Subtotal ({cartItems.reduce((acc, item) => acc + item.quantity, 0)} items)</span>
               <span>${cartTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>Free</span>
+              <span>Envío</span>
+              <span>Gratis</span>
             </div>
             <div className="border-t pt-3 flex justify-between font-bold text-lg">
               <span>Total</span>
@@ -106,7 +105,7 @@ const CartPage = () => {
             to="/checkout"
             className="block w-full text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold"
           >
-            Checkout
+            Pagar
           </Link>
         </div>
       </div>

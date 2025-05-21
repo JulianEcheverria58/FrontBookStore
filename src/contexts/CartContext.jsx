@@ -1,13 +1,19 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const CartContext = createContext();
+export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [cartItems, setCartItems] = useState([]);
 
+  // Cargar carrito desde localStorage al iniciar
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart));
+    }
+  }, []);
+
+  // Guardar carrito en localStorage cuando cambia
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
@@ -26,18 +32,18 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const removeFromCart = (id) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  const removeFromCart = (bookId) => {
+    setCartItems(prevItems => prevItems.filter(item => item.id !== bookId));
   };
 
-  const updateQuantity = (id, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
+  const updateQuantity = (bookId, newQuantity) => {
+    if (newQuantity < 1) return;
+    
     setCartItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
+        item.id === bookId 
+          ? { ...item, quantity: newQuantity } 
+          : item
       )
     );
   };
@@ -47,25 +53,19 @@ export const CartProvider = ({ children }) => {
   };
 
   const cartTotal = cartItems.reduce(
-    (sum, item) => sum + (item.price * item.quantity),
-    0
-  );
-
-  const cartItemCount = cartItems.reduce(
-    (sum, item) => sum + item.quantity,
+    (total, item) => total + (item.price * item.quantity), 
     0
   );
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
+    <CartContext.Provider 
+      value={{ 
+        cartItems, 
         cartTotal,
-        cartItemCount,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart
+        addToCart, 
+        removeFromCart, 
+        updateQuantity, 
+        clearCart 
       }}
     >
       {children}
@@ -73,6 +73,11 @@ export const CartProvider = ({ children }) => {
   );
 };
 
+// Hook personalizado
 export const useCart = () => {
-  return useContext(CartContext);
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 };

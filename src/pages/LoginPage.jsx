@@ -44,7 +44,7 @@ const LoginPage = () => {
         
         {registrationSuccess && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            ¡Registro exitoso! Por favor inicia sesión.
+            Registration successful! Please login.
           </div>
         )}
         
@@ -58,7 +58,7 @@ const LoginPage = () => {
           <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Correo electrónico
+                Email
               </label>
               <input
                 id="email"
@@ -74,7 +74,7 @@ const LoginPage = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Contraseña
+                Password
               </label>
               <input
                 id="password"
@@ -105,7 +105,7 @@ const LoginPage = () => {
             onClick={() => navigate('/register')}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            ¿No tienes cuenta? Regístrate
+            Don't have an account? Sign up
           </button>
         </div>
       </div>

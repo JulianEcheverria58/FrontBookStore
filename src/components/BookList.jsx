@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { getBooks } from '../api/bookApi';
 
-// Configuración de Azure Blob Storage (debe coincidir con BookDetail)
 const AZURE_STORAGE_URL = 'https://imagesbooks.blob.core.windows.net';
 const CONTAINER_NAME = 'bookimages';
 const BASE_IMAGE_URL = `${AZURE_STORAGE_URL}/${CONTAINER_NAME}/`;
@@ -24,7 +23,6 @@ const BookList = ({ filters = {} }) => {
           id: book.bookId,
           genre: book.category || 'Sin género',
           year: book.dateEntry ? new Date(book.dateEntry).getFullYear() : 'N/A',
-          // Procesamiento de imagen consistente con BookDetail
           image: book.imageUrl 
             ? `${BASE_IMAGE_URL}${book.imageUrl.trim().toLowerCase()}`
             : DEFAULT_IMAGE
@@ -39,7 +37,6 @@ const BookList = ({ filters = {} }) => {
     fetchBooks();
   }, []);
 
-  // Filtrado optimizado
   const filteredBooks = allBooks.filter(book => {
     const searchLower = filters.searchQuery?.toLowerCase();
     if (searchLower && 
@@ -99,7 +96,7 @@ const BookList = ({ filters = {} }) => {
                   e.target.src = DEFAULT_IMAGE;
                   e.target.classList.add('p-4');
                 }}
-                loading="lazy" // Optimización de carga
+                loading="lazy"
               />
             </div>
             
@@ -127,13 +124,13 @@ const BookList = ({ filters = {} }) => {
                   title: book.title,
                   author: book.author,
                   price: book.price,
-                  imageUrl: book.image
+                  image: book.image
                 });
               }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
               disabled={book.stock <= 0}
             >
-              {book.stock > 0 ? 'Añadir' : 'Agotado'}
+              {book.stock > 0 ? 'Add' : 'Exhausted'}
             </button>
           </div>
         </div>

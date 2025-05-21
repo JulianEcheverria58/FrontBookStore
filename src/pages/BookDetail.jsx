@@ -16,10 +16,9 @@ const BookDetail = () => {
         const data = await getBookDetails(id);
         setBook({
           ...data,
-          // Mapeamos los nombres si es necesario
           genre: data.category,
           year: data.publicationYear,
-          image: data.imageUrl
+          image: data.imageUrl || '/images/default-book.jpg'
         });
       } catch (err) {
         setError(err.message);
@@ -59,10 +58,9 @@ const BookDetail = () => {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="flex flex-col md:flex-row">
-          {/* Imagen del libro */}
           <div className="md:w-1/3 p-6 flex justify-center bg-gray-50">
             <img
-              src={book.imageUrl || '/images/default-book.jpg'}
+              src={book.image}
               alt={book.title}
               className="h-96 object-contain rounded-lg shadow-lg"
               onError={(e) => {
@@ -72,12 +70,10 @@ const BookDetail = () => {
             />
           </div>
           
-          {/* Detalles del libro */}
           <div className="md:w-2/3 p-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{book.title}</h1>
             <p className="text-xl text-gray-600 mb-4">por {book.author}</p>
             
-            {/* Badges de información */}
             <div className="flex flex-wrap gap-2 mb-6">
               <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                 {book.category || 'Sin categoría'}
@@ -95,7 +91,6 @@ const BookDetail = () => {
               </span>
             </div>
             
-            {/* Descripción */}
             <div className="mb-6">
               <h3 className="font-semibold text-lg text-gray-800 mb-2">Descripción</h3>
               <p className="text-gray-700">
@@ -103,7 +98,6 @@ const BookDetail = () => {
               </p>
             </div>
             
-            {/* Detalles adicionales */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <h4 className="font-semibold text-gray-700">ISBN</h4>
@@ -125,7 +119,6 @@ const BookDetail = () => {
               </div>
             </div>
             
-            {/* Precio y botón */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t pt-4">
               <div className="mb-4 sm:mb-0">
                 <p className="text-sm text-gray-500">Precio</p>
@@ -134,7 +127,13 @@ const BookDetail = () => {
                 </p>
               </div>
               <button
-                onClick={() => addToCart(book)}
+                onClick={() => addToCart({
+                  id: book.bookId,
+                  title: book.title,
+                  author: book.author,
+                  price: book.price,
+                  image: book.image
+                })}
                 disabled={book.stock <= 0}
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                   book.stock > 0
@@ -142,7 +141,7 @@ const BookDetail = () => {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {book.stock > 0 ? 'Añadir al carrito' : 'No disponible'}
+                {book.stock > 0 ? 'Add to cart' : 'Not available'}
               </button>
             </div>
           </div>

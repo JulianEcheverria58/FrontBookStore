@@ -22,14 +22,10 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/book/:id" element={<BookDetail />} />
               <Route path="/cart" element={<CartPage />} />
-           
-
-          
               <Route element={<ProtectedRoute />}>
-                 <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/profile" element={<ProfilePage />} />               
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
               </Route>
-              
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
             </Routes>

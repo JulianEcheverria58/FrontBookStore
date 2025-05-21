@@ -108,12 +108,12 @@ const ProfilePage = () => {
 
   const handleRecharge = async () => {
     if (!user?.email) {
-      setError('No hay usuario autenticado');
+      setError('There is no authenticated user');
       return;
     }
 
     if (rechargeAmount < 50000 || rechargeAmount > 200000) {
-      setError('El monto debe estar entre $50.000 y $200.000');
+      setError('The amount must be between $50,000 and $200,000');
       return;
     }
     
@@ -127,7 +127,7 @@ const ProfilePage = () => {
       }));
       
       setError('');
-      alert(`Recarga exitosa por $${rechargeAmount.toLocaleString()}`);
+      alert(`Successful recharge by $${rechargeAmount.toLocaleString()}`);
     } catch (err) {
       console.error('Error recharging balance:', err);
       setError(err.response?.data?.error || 'Error al recargar saldo');

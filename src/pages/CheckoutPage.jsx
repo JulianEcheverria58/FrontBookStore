@@ -6,14 +6,13 @@ import { processPayment } from '../api/paymentApi';
 
 const CheckoutPage = () => {
   const { user } = useAuth();
-  const { cart, clearCart } = useCart();
+  const { cartItems, clearCart, cartTotal } = useCart();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [userBalance, setUserBalance] = useState(0);
-  const [cartItems, setCartItems] = useState([]);
+  const [userBalance, setUserBalance] = useState(user?.membershipBalance || 0);
 
   useEffect(() => {
     if (!user) {
@@ -21,24 +20,14 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (!cart || cart.length === 0) {
+    if (cartItems.length === 0) {
       setErrorMessage('Tu carrito está vacío');
-      setLoading(false);
-      return;
     }
-
-    setCartItems([...cart]);
-    setUserBalance(user.membershipBalance || 0);
-    setLoading(false);
-  }, [user, cart, navigate]);
-
-  const cartTotal = cartItems.reduce((total, item) => {
-    return total + (item.price * item.quantity);
-  }, 0);
+  }, [user, cartItems, navigate]);
 
   const handlePayment = async () => {
     if (cartItems.length === 0) {
-      setErrorMessage('No hay items para procesar. Por favor, agrega productos al carrito.');
+      setErrorMessage('No hay items para procesar');
       return;
     }
 
