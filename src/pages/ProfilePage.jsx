@@ -14,7 +14,7 @@ const ProfilePage = () => {
     city: 'Bogotá',
     country: 'Colombia',
     age: '',
-    gender: 'Masculino',
+    gender: 'Male',
     profession: '',
     balance: 0,
     membershipStatus: 'Active',
@@ -31,13 +31,13 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        
+
         if (!user?.email) {
-          throw new Error('No hay usuario autenticado');
+          throw new Error('No authenticated user');
         }
 
         const data = await getProfile(user.email);
-        
+
         setProfileData(prev => ({
           ...prev,
           name: data.name || '',
@@ -46,7 +46,7 @@ const ProfilePage = () => {
           city: data.city || 'Bogotá',
           country: data.country || 'Colombia',
           age: data.age || '',
-          gender: data.gender || 'Masculino',
+          gender: data.gender || 'Male',
           profession: data.profession || '',
           balance: data.membershipBalance || 0,
           membershipStatus: data.membershipStatus || 'Active',
@@ -55,11 +55,11 @@ const ProfilePage = () => {
             ? new Date(data.membershipStartDate).toLocaleDateString() 
             : prev.membershipStartDate
         }));
-        
+
         setError('');
       } catch (err) {
         console.error('Error loading profile:', err);
-        setError(err.message || 'Error al cargar el perfil');
+        setError(err.message || 'Error loading profile');
         if (err.response?.status === 401) {
           logout();
           navigate('/login');
@@ -68,7 +68,7 @@ const ProfilePage = () => {
         setLoading(false);
       }
     };
-    
+
     if (user?.email) {
       fetchUserData();
     } else {
@@ -93,14 +93,14 @@ const ProfilePage = () => {
         gender: profileData.gender,
         profession: profileData.profession
       };
-      
+
       await updateProfile(user.email, updatedData);
       setIsEditing(false);
       setError('');
-      alert('Perfil actualizado exitosamente');
+      alert('Profile updated successfully');
     } catch (err) {
       console.error('Error updating profile:', err);
-      setError(err.response?.data?.error || 'Error al actualizar el perfil');
+      setError(err.response?.data?.error || 'Error updating profile');
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ const ProfilePage = () => {
 
   const handleRecharge = async () => {
     if (!user?.email) {
-      setError('There is no authenticated user');
+      setError('No authenticated user');
       return;
     }
 
@@ -116,21 +116,21 @@ const ProfilePage = () => {
       setError('The amount must be between $50,000 and $200,000');
       return;
     }
-    
+
     try {
       setLoading(true);
       const { newBalance } = await rechargeBalance(user.email, rechargeAmount);
-      
+
       setProfileData(prev => ({
         ...prev,
         balance: newBalance
       }));
-      
+
       setError('');
-      alert(`Successful recharge by $${rechargeAmount.toLocaleString()}`);
+      alert(`Successfully recharged $${rechargeAmount.toLocaleString()}`);
     } catch (err) {
       console.error('Error recharging balance:', err);
-      setError(err.response?.data?.error || 'Error al recargar saldo');
+      setError(err.response?.data?.error || 'Error recharging balance');
     } finally {
       setLoading(false);
     }
@@ -148,22 +148,22 @@ const ProfilePage = () => {
 
   return (
     <div className="container mx-auto p-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Mi Perfil</h1>
-      
+      <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
           {error}
         </div>
       )}
-      
+
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Tarjeta de Membresía */}
+        {/* Membership Card */}
         <div className="md:col-span-1">
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold">Library Premium</h2>
-                <p className="text-blue-200">Miembro desde: {profileData.membershipStartDate}</p>
+                <p className="text-blue-200">Member since: {profileData.membershipStartDate}</p>
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-bold ${
                 profileData.membershipStatus === 'Active' 
@@ -173,25 +173,25 @@ const ProfilePage = () => {
                 {profileData.membershipStatus}
               </div>
             </div>
-            
+
             <div className="mb-6">
-              <p className="text-blue-200">Número de membresía</p>
+              <p className="text-blue-200">Membership Number</p>
               <p className="text-xl font-mono">{profileData.membershipNumber}</p>
             </div>
-            
+
             <div className="bg-black bg-opacity-20 p-4 rounded-lg">
-              <p className="text-blue-200">Saldo disponible</p>
+              <p className="text-blue-200">Available Balance</p>
               <p className="text-3xl font-bold">
                 ${profileData.balance.toLocaleString()}
               </p>
             </div>
           </div>
 
-          {/* Sección de Recarga */}
+          {/* Recharge Section */}
           <div className="mt-6 bg-white p-6 rounded-lg shadow-sm">
-            <h3 className="text-lg font-bold mb-4">Recargar saldo</h3>
+            <h3 className="text-lg font-bold mb-4">Recharge Balance</h3>
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Monto a recargar</label>
+              <label className="block text-gray-700 mb-2">Amount to recharge</label>
               <input
                 type="number"
                 min="50000"
@@ -203,7 +203,7 @@ const ProfilePage = () => {
                 disabled={loading}
               />
               <p className="text-sm text-gray-500 mt-1">
-                Mínimo $50.000 - Máximo $200.000
+                Min $50,000 - Max $200,000
               </p>
             </div>
             <button
@@ -213,16 +213,16 @@ const ProfilePage = () => {
                 loading ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
               } text-white`}
             >
-              {loading ? 'Procesando...' : `Recargar $${rechargeAmount.toLocaleString()}`}
+              {loading ? 'Processing...' : `Recharge $${rechargeAmount.toLocaleString()}`}
             </button>
           </div>
         </div>
 
-        {/* Información del Perfil */}
+        {/* Profile Information */}
         <div className="md:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Información Personal</h2>
+              <h2 className="text-xl font-bold">Personal Information</h2>
               {isEditing ? (
                 <div className="space-x-2">
                   <button
@@ -232,14 +232,14 @@ const ProfilePage = () => {
                       loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
                     } text-white`}
                   >
-                    {loading ? 'Guardando...' : 'Guardar'}
+                    {loading ? 'Saving...' : 'Save'}
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
                     disabled={loading}
                     className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
                   >
-                    Cancelar
+                    Cancel
                   </button>
                 </div>
               ) : (
@@ -247,14 +247,14 @@ const ProfilePage = () => {
                   onClick={() => setIsEditing(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
                 >
-                  Editar
+                  Edit
                 </button>
               )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700 mb-2">Nombres</label>
+                <label className="block text-gray-700 mb-2">Full Name</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -275,7 +275,7 @@ const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Teléfono</label>
+                <label className="block text-gray-700 mb-2">Phone</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -291,7 +291,7 @@ const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Ciudad</label>
+                <label className="block text-gray-700 mb-2">City</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -307,7 +307,7 @@ const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">País</label>
+                <label className="block text-gray-700 mb-2">Country</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -323,7 +323,7 @@ const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Edad</label>
+                <label className="block text-gray-700 mb-2">Age</label>
                 {isEditing ? (
                   <input
                     type="number"
@@ -339,7 +339,7 @@ const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Sexo</label>
+                <label className="block text-gray-700 mb-2">Gender</label>
                 {isEditing ? (
                   <select
                     name="gender"
@@ -348,10 +348,9 @@ const ProfilePage = () => {
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   >
-                    <option value="Masculino">Masculino</option>
-                    <option value="Femenino">Femenino</option>
-                    <option value="Otro">Otro</option>
-                    <option value="Prefiero no decir">Prefiero no decir</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 ) : (
                   <p className="p-3 border-b">{profileData.gender}</p>
@@ -359,7 +358,7 @@ const ProfilePage = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Profesión</label>
+                <label className="block text-gray-700 mb-2">Profession</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -374,12 +373,6 @@ const ProfilePage = () => {
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Historial de Compras */}
-          <div className="mt-6 bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-bold mb-4">Historial de Compras</h2>
-            <p className="text-gray-500">Aquí aparecerá tu historial de compras...</p>
           </div>
         </div>
       </div>

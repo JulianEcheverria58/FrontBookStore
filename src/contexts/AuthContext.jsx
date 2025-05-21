@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
       user: {
         email: responseData.user.email,
         name: responseData.user.name,
-        // Agrega otros campos básicos del usuario que necesites
+        membershipBalance: responseData.user.membershipBalance || 0     
       },
       token: responseData.token || null,
       initialized: true

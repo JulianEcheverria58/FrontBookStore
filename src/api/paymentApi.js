@@ -36,12 +36,11 @@ export const processPayment = async (paymentData) => {
   }
 };
 
-export const getUserBalance = async (userId) => {
+export const getUserBalance = async (email) => {
   try {
-    const response = await axios.get(`${API_URL}/balance/${userId}`, {
-      headers: getAuthHeader()
-    });
-    return response.data.balance;
+    const encodedEmail = encodeURIComponent(email);  
+    const response = await axios.get(`http://localhost:8080/api/users/${encodedEmail}/balance`);
+    return response.data.membershipBalance;
   } catch (error) {
     console.error('Error fetching user balance:', error);
     throw error;
