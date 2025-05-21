@@ -20,10 +20,13 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      const result = await authApi.login({ email, password });
+      const response = await authApi.login({ email, password });
       
-      if (result.success) {
-        login(result.user); // Usa la función login del contexto
+      if (response.success) {
+        login({
+          user: response.user,
+          token: response.token
+        });
         navigate('/');
       }
     } catch (err) {

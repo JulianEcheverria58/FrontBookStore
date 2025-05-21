@@ -4,14 +4,17 @@ import { getProfile, updateProfile, rechargeBalance } from '../api/userApi';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProfilePage = () => {
-  const [userData, setUserData] = useState({
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const [profileData, setProfileData] = useState({
     name: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
-    city: '',
-    country: '',
+    city: 'Bogotá',
+    country: 'Colombia',
     age: '',
-    gender: '',
+    gender: 'Masculino',
     profession: '',
     balance: 0,
     membershipStatus: 'Active',
@@ -23,35 +26,40 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { logout } = useAuth();
-  const navigate = useNavigate();
 
-  // Cargar datos del usuario
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const data = await getProfile();
         
-        setUserData({
+        if (!user?.email) {
+          throw new Error('No hay usuario autenticado');
+        }
+
+        const data = await getProfile(user.email);
+        
+        setProfileData(prev => ({
+          ...prev,
           name: data.name || '',
-          email: data.email || '',
+          email: data.email || user.email,
           phone: data.phone || '',
-          city: data.city || 'Bogotá', // Valor por defecto
-          country: data.country || 'Colombia', // Valor por defecto
+          city: data.city || 'Bogotá',
+          country: data.country || 'Colombia',
           age: data.age || '',
-          gender: data.gender || 'Masculino', // Valor por defecto
+          gender: data.gender || 'Masculino',
           profession: data.profession || '',
           balance: data.membershipBalance || 0,
           membershipStatus: data.membershipStatus || 'Active',
-          membershipNumber: data.membershipNumber || 'LIB-' + Math.floor(100000 + Math.random() * 900000),
-          membershipStartDate: data.membershipStartDate ? new Date(data.membershipStartDate).toLocaleDateString() : new Date().toLocaleDateString()
-        });
+          membershipNumber: data.membershipNumber || prev.membershipNumber,
+          membershipStartDate: data.membershipStartDate 
+            ? new Date(data.membershipStartDate).toLocaleDateString() 
+            : prev.membershipStartDate
+        }));
         
         setError('');
       } catch (err) {
         console.error('Error loading profile:', err);
-        setError('Error al cargar el perfil. Por favor intenta nuevamente.');
+        setError(err.message || 'Error al cargar el perfil');
         if (err.response?.status === 401) {
           logout();
           navigate('/login');
@@ -61,40 +69,49 @@ const ProfilePage = () => {
       }
     };
     
-    fetchUserData();
-  }, [logout, navigate]);
+    if (user?.email) {
+      fetchUserData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, logout, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUserData(prev => ({ ...prev, [name]: value }));
+    setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
     try {
       setLoading(true);
       const updatedData = {
-        name: userData.name,
-        phone: userData.phone,
-        city: userData.city,
-        country: userData.country,
-        age: userData.age,
-        gender: userData.gender,
-        profession: userData.profession
+        name: profileData.name,
+        phone: profileData.phone,
+        city: profileData.city,
+        country: profileData.country,
+        age: profileData.age,
+        gender: profileData.gender,
+        profession: profileData.profession
       };
       
-      await updateProfile(updatedData);
+      await updateProfile(user.email, updatedData);
       setIsEditing(false);
       setError('');
       alert('Perfil actualizado exitosamente');
     } catch (err) {
       console.error('Error updating profile:', err);
-      setError('Error al actualizar el perfil. Por favor intenta nuevamente.');
+      setError(err.response?.data?.error || 'Error al actualizar el perfil');
     } finally {
       setLoading(false);
     }
   };
 
   const handleRecharge = async () => {
+    if (!user?.email) {
+      setError('No hay usuario autenticado');
+      return;
+    }
+
     if (rechargeAmount < 50000 || rechargeAmount > 200000) {
       setError('El monto debe estar entre $50.000 y $200.000');
       return;
@@ -102,9 +119,9 @@ const ProfilePage = () => {
     
     try {
       setLoading(true);
-      const { newBalance } = await rechargeBalance(rechargeAmount);
+      const { newBalance } = await rechargeBalance(user.email, rechargeAmount);
       
-      setUserData(prev => ({
+      setProfileData(prev => ({
         ...prev,
         balance: newBalance
       }));
@@ -113,7 +130,7 @@ const ProfilePage = () => {
       alert(`Recarga exitosa por $${rechargeAmount.toLocaleString()}`);
     } catch (err) {
       console.error('Error recharging balance:', err);
-      setError(err.response?.data?.error || 'Error al recargar saldo. Por favor intenta nuevamente.');
+      setError(err.response?.data?.error || 'Error al recargar saldo');
     } finally {
       setLoading(false);
     }
@@ -146,26 +163,26 @@ const ProfilePage = () => {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold">Library Premium</h2>
-                <p className="text-blue-200">Miembro desde: {userData.membershipStartDate}</p>
+                <p className="text-blue-200">Miembro desde: {profileData.membershipStartDate}</p>
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-bold ${
-                userData.membershipStatus === 'Active' 
+                profileData.membershipStatus === 'Active' 
                   ? 'bg-green-100 text-green-800' 
                   : 'bg-yellow-100 text-yellow-800'
               }`}>
-                {userData.membershipStatus}
+                {profileData.membershipStatus}
               </div>
             </div>
             
             <div className="mb-6">
               <p className="text-blue-200">Número de membresía</p>
-              <p className="text-xl font-mono">{userData.membershipNumber}</p>
+              <p className="text-xl font-mono">{profileData.membershipNumber}</p>
             </div>
             
             <div className="bg-black bg-opacity-20 p-4 rounded-lg">
               <p className="text-blue-200">Saldo disponible</p>
               <p className="text-3xl font-bold">
-                ${userData.balance.toLocaleString()}
+                ${profileData.balance.toLocaleString()}
               </p>
             </div>
           </div>
@@ -242,19 +259,19 @@ const ProfilePage = () => {
                   <input
                     type="text"
                     name="name"
-                    value={userData.name}
+                    value={profileData.name}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   />
                 ) : (
-                  <p className="p-3 border-b">{userData.name}</p>
+                  <p className="p-3 border-b">{profileData.name}</p>
                 )}
               </div>
 
               <div>
                 <label className="block text-gray-700 mb-2">Email</label>
-                <p className="p-3 border-b">{userData.email}</p>
+                <p className="p-3 border-b">{profileData.email}</p>
               </div>
 
               <div>
@@ -263,13 +280,13 @@ const ProfilePage = () => {
                   <input
                     type="text"
                     name="phone"
-                    value={userData.phone}
+                    value={profileData.phone}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   />
                 ) : (
-                  <p className="p-3 border-b">{userData.phone}</p>
+                  <p className="p-3 border-b">{profileData.phone}</p>
                 )}
               </div>
 
@@ -279,13 +296,13 @@ const ProfilePage = () => {
                   <input
                     type="text"
                     name="city"
-                    value={userData.city}
+                    value={profileData.city}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   />
                 ) : (
-                  <p className="p-3 border-b">{userData.city}</p>
+                  <p className="p-3 border-b">{profileData.city}</p>
                 )}
               </div>
 
@@ -295,13 +312,13 @@ const ProfilePage = () => {
                   <input
                     type="text"
                     name="country"
-                    value={userData.country}
+                    value={profileData.country}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   />
                 ) : (
-                  <p className="p-3 border-b">{userData.country}</p>
+                  <p className="p-3 border-b">{profileData.country}</p>
                 )}
               </div>
 
@@ -311,13 +328,13 @@ const ProfilePage = () => {
                   <input
                     type="number"
                     name="age"
-                    value={userData.age}
+                    value={profileData.age}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   />
                 ) : (
-                  <p className="p-3 border-b">{userData.age}</p>
+                  <p className="p-3 border-b">{profileData.age}</p>
                 )}
               </div>
 
@@ -326,7 +343,7 @@ const ProfilePage = () => {
                 {isEditing ? (
                   <select
                     name="gender"
-                    value={userData.gender}
+                    value={profileData.gender}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
@@ -337,7 +354,7 @@ const ProfilePage = () => {
                     <option value="Prefiero no decir">Prefiero no decir</option>
                   </select>
                 ) : (
-                  <p className="p-3 border-b">{userData.gender}</p>
+                  <p className="p-3 border-b">{profileData.gender}</p>
                 )}
               </div>
 
@@ -347,19 +364,19 @@ const ProfilePage = () => {
                   <input
                     type="text"
                     name="profession"
-                    value={userData.profession}
+                    value={profileData.profession}
                     onChange={handleInputChange}
                     className="w-full p-3 border rounded-lg"
                     disabled={loading}
                   />
                 ) : (
-                  <p className="p-3 border-b">{userData.profession}</p>
+                  <p className="p-3 border-b">{profileData.profession}</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Historial de Compras (opcional) */}
+          {/* Historial de Compras */}
           <div className="mt-6 bg-white p-6 rounded-lg shadow-sm">
             <h2 className="text-xl font-bold mb-4">Historial de Compras</h2>
             <p className="text-gray-500">Aquí aparecerá tu historial de compras...</p>

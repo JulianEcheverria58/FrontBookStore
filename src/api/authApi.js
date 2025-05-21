@@ -8,33 +8,23 @@ const authApi = {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(credentials),
-            credentials: 'include'
+            body: JSON.stringify(credentials)
         });
 
-        // Verifica si la respuesta está vacía
-        const text = await response.text();
-        if (!text) {
-            throw new Error('La respuesta del servidor está vacía');
-        }
+        const data = await response.json();
 
-        const data = JSON.parse(text); // Parsea manualmente
-
-        if (!response.ok) {
+        if (!response.ok || !data.success) {
             throw new Error(data.message || 'Credenciales inválidas');
         }
 
-        return {
-            success: true,
-            user: data.user,
-            token: data.token,
-            message: data.message || 'Inicio de sesión exitoso'
-        };
+        // Almacena los datos del usuario (sin token)
+        localStorage.setItem('user', JSON.stringify(data.user));
+        return data;
     } catch (error) {
-        console.error('Error en authApi.login:', error);
+        console.error('Error en login:', error);
         throw error;
     }
-  },
+},
 
   async register(userData) {
     try {

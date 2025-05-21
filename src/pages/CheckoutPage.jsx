@@ -1,130 +1,177 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useCart } from '../contexts/CartContext';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import { processPayment } from '../api/paymentApi';
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
+  const { cart, clearCart } = useCart();
   const navigate = useNavigate();
-  const [orderConfirmed, setOrderConfirmed] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    setTimeout(() => {
-      setOrderConfirmed(true);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [userBalance, setUserBalance] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+
+    if (!cart || cart.length === 0) {
+      setErrorMessage('Tu carrito está vacío');
+      setLoading(false);
+      return;
+    }
+
+    setCartItems([...cart]);
+    setUserBalance(user.membershipBalance || 0);
+    setLoading(false);
+  }, [user, cart, navigate]);
+
+  const cartTotal = cartItems.reduce((total, item) => {
+    return total + (item.price * item.quantity);
+  }, 0);
+
+  const handlePayment = async () => {
+    if (cartItems.length === 0) {
+      setErrorMessage('No hay items para procesar. Por favor, agrega productos al carrito.');
+      return;
+    }
+
+    if (userBalance < cartTotal) {
+      setErrorMessage(`Saldo insuficiente. Necesitas $${cartTotal.toFixed(2)} (Saldo actual: $${userBalance.toFixed(2)})`);
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const paymentData = {
+        userEmail: user.email,
+        cartItems: cartItems.map(item => ({
+          bookId: item.id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totalAmount: cartTotal,
+        paymentMethod: 'membership'
+      };
+
+      const response = await processPayment(paymentData);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Error al procesar el pago');
+      }
+
+      setIsSuccess(true);
       clearCart();
-    }, 1500);
+      setTimeout(() => navigate('/profile'), 2000);
+    } catch (error) {
+      console.error('Payment error:', error);
+      setErrorMessage(error.message || 'Ocurrió un error al procesar el pago');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (orderConfirmed) {
+  if (loading) {
     return (
-      <div className="container mx-auto p-4 py-12 text-center">
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-          <h2 className="text-2xl font-bold mb-2">Order Confirmed!</h2>
-          <p>Thank you for your purchase.</p>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <h2 className="text-xl font-bold">¡Compra exitosa!</h2>
+          <p>Redirigiendo a tu perfil...</p>
         </div>
-        <Link 
-          to="/" 
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-        >
-          Continue Shopping
-        </Link>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <h1 className="text-2xl font-bold mb-6">Finalizar Compra</h1>
       
-      <div className="grid md:grid-cols-3 gap-8">
-        
-        {/* Información del pedido */}
-        <div className="md:col-span-2">
-          <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-            {cartItems.map(item => (
-              <div key={item.id} className="border-b py-4 flex justify-between">
-                <div>
-                  <h3 className="font-medium">{item.title}</h3>
-                  <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {errorMessage}
+        </div>
+      )}
+
+      {cartItems.length > 0 ? (
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-4">Resumen de compra</h2>
+              {cartItems.map(item => (
+                <div key={item.id} className="flex justify-between py-3 border-b">
+                  <div>
+                    <h3 className="font-medium">{item.title}</h3>
+                    <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                  </div>
+                  <p>${(item.price * item.quantity).toFixed(2)}</p>
                 </div>
-                <span className="font-bold">${(item.price * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
-            <div className="border-t pt-4 mt-4">
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total</span>
+              ))}
+              <div className="flex justify-between font-bold text-lg mt-4 pt-3">
+                <span>Total:</span>
                 <span>${cartTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
 
-          {/* Información de envío */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-bold mb-4">Shipping Information</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Full Name</label>
-                <input
-                  type="text"
-                  defaultValue={user?.name || ''}
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
+          <div>
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-lg font-semibold mb-3">Método de pago</h2>
+              <div className="bg-blue-50 p-4 rounded mb-4">
+                <p className="font-medium">Saldo de membresía</p>
+                <p className="text-gray-700 mt-1">
+                  Saldo disponible: ${userBalance.toFixed(2)}
+                </p>
+                {userBalance < cartTotal && (
+                  <p className="text-red-500 mt-2">Saldo insuficiente</p>
+                )}
               </div>
-              <div>
-                <label className="block text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  defaultValue={user?.email || ''}
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 mb-2">Address</label>
-                <input
-                  type="text"
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
-              </div>
+
+              <button
+                onClick={handlePayment}
+                disabled={loading || userBalance < cartTotal}
+                className={`w-full py-3 rounded-lg font-bold text-white ${
+                  loading || userBalance < cartTotal
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {loading ? 'Procesando pago...' : 'Confirmar compra'}
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Membership Balance */}
-        <div>
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm sticky top-4">
-            <h2 className="text-xl font-bold mb-4">Payment Method</h2>
-            
-            <div className="bg-blue-50 p-4 rounded-lg mb-6">
-              <p className="text-lg font-semibold mb-2">Membership Balance</p>
-              <p className="font-bold">Available Balance: ${user?.balance?.toFixed(2) || '0.00'}</p>
-              {cartTotal > (user?.balance || 0) && (
-                <p className="text-red-500 text-sm mt-2">
-                  Insufficient balance. Please add ${(cartTotal - (user?.balance || 0)).toFixed(2)} to complete purchase.
-                </p>
-              )}
+      ) : (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
             </div>
-
-            <button
-              type="submit"
-              disabled={cartTotal > (user?.balance || 0)}
-              className={`w-full py-3 rounded-lg font-bold text-white ${
-                cartTotal > (user?.balance || 0)
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700'
-              }`}
-            >
-              Confirm Order (${cartTotal.toFixed(2)})
-            </button>
-          </form>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                Tu carrito está vacío. <a href="/" className="font-medium text-yellow-700 underline hover:text-yellow-600">Continúa comprando</a>.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

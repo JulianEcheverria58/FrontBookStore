@@ -9,7 +9,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
-import ProtectedRoute from './components/ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -22,10 +22,12 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/book/:id" element={<BookDetail />} />
               <Route path="/cart" element={<CartPage />} />
-              
+           
+
+          
               <Route element={<ProtectedRoute />}>
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
+                 <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/profile" element={<ProfilePage />} />               
               </Route>
               
               <Route path="/login" element={<LoginPage />} />
