@@ -62,7 +62,7 @@ const CartPage = () => {
                 onClick={() => removeFromCart(item.id)}
                 className="self-start md:self-center text-red-500 hover:text-red-700"
               >
-                Eliminate
+                Delate
               </button>
             </div>
           ))}

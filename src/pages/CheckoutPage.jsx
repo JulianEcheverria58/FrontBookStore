@@ -7,10 +7,10 @@ import transactionApi from '../api/transactionApi';
 
 const CheckoutPage = () => {
   const { user } = useAuth();
-  const { 
-    cartItems = [], 
-    clearCart, 
-    cartTotal = 0 
+  const {
+    cartItems = [],
+    clearCart,
+    cartTotal = 0
   } = useCart();
   const navigate = useNavigate();
 
@@ -26,7 +26,7 @@ const CheckoutPage = () => {
       const data = await response.json();
       return data.ip || 'unknown';
     } catch (error) {
-      console.error('Error obteniendo IP:', error);
+      console.error('Error getting IP:', error);
       return 'unknown';
     }
   };
@@ -39,12 +39,12 @@ const CheckoutPage = () => {
       }
 
       if (!cartItems?.length) {
-        setErrorMessage('¡Tu carrito está vacío!');
+        setErrorMessage('Your cart is empty!');
         return false;
       }
 
-      const isValid = cartItems.every(item => 
-        item?.id && 
+      const isValid = cartItems.every(item =>
+        item?.id &&
         item?.title &&
         Number.isInteger(item?.quantity) &&
         item.quantity > 0 &&
@@ -53,7 +53,7 @@ const CheckoutPage = () => {
       );
 
       if (!isValid) {
-        setErrorMessage('Algunos items son inválidos');
+        setErrorMessage('Some items are invalid');
         return false;
       }
 
@@ -67,8 +67,8 @@ const CheckoutPage = () => {
         const balance = await getUserBalance(user.email);
         setUserBalance(balance || 0);
       } catch (error) {
-        console.error('Error cargando saldo:', error);
-        setErrorMessage('Error cargando saldo. Recarga la página.');
+        console.error('Error loading balance:', error);
+        setErrorMessage('Error loading balance. Please refresh the page.');
         setUserBalance(0);
       }
     };
@@ -81,18 +81,16 @@ const CheckoutPage = () => {
     setErrorMessage('');
 
     try {
-      // Validaciones iniciales
       if (!user?.email) {
-        throw new Error('Usuario no autenticado');
+        throw new Error('User not authenticated');
       }
 
       if (userBalance < cartTotal) {
-        throw new Error(`Saldo insuficiente: $${cartTotal.toFixed(2)} requeridos (Tienes: $${userBalance.toFixed(2)})`);
+        throw new Error(`Insufficient balance: $${cartTotal.toFixed(2)} required (You have: $${userBalance.toFixed(2)})`);
       }
 
       const clientIp = await fetchClientIP();
 
-      // 1. Procesar el pago principal
       const paymentPayload = {
         userEmail: user.email,
         paymentMethod: "membership",
@@ -106,14 +104,13 @@ const CheckoutPage = () => {
         ipCliente: clientIp
       };
 
-      console.log('Enviando pago:', paymentPayload);
+      console.log('Sending payment:', paymentPayload);
       const paymentResult = await processPayment(paymentPayload);
-      
+
       if (!paymentResult?.success) {
-        throw new Error(paymentResult?.message || 'Error en el procesamiento del pago');
+        throw new Error(paymentResult?.message || 'Payment processing failed');
       }
 
-      // 2. Registrar la transacción (opcional - solo si es necesario)
       try {
         const transactionResult = await transactionApi.createTransaction({
           userEmail: user.email,
@@ -123,24 +120,21 @@ const CheckoutPage = () => {
         });
         setTransactionId(transactionResult.id || paymentResult.transactionId);
       } catch (transactionError) {
-        console.warn('Advertencia al registrar transacción:', transactionError);
-        // No fallar todo el proceso si solo falla el registro secundario
-        setTransactionId(paymentResult.transactionId || 'no-registrada');
+        console.warn('Warning registering transaction:', transactionError);
+        setTransactionId(paymentResult.transactionId || 'unregistered');
       }
 
-      // Éxito del proceso
       setIsSuccess(true);
       clearCart();
       setUserBalance(paymentResult.newBalance);
 
-      // Redirigir después de 2 segundos
-      setTimeout(() => navigate('/profile/orders'), 2000);
+      setTimeout(() => navigate('/profile'), 2000);
 
     } catch (error) {
-      console.error('Error en el proceso de pago:', error);
+      console.error('Payment process error:', error);
       setErrorMessage(
-        error.message.includes('Usuario no encontrado')
-          ? 'Tu sesión ha expirado. Por favor inicia sesión nuevamente'
+        error.message.includes('User not found')
+          ? 'Your session has expired. Please log in again.'
           : error.message
       );
     } finally {
@@ -148,37 +142,34 @@ const CheckoutPage = () => {
     }
   };
 
-  // Componente: Loader
   const renderLoader = () => (
     <div className="flex flex-col items-center justify-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      <p className="mt-3 text-gray-600">Procesando transacción...</p>
+      <p className="mt-3 text-gray-600">Processing transaction...</p>
     </div>
   );
 
-  // Componente: Éxito
   const renderSuccess = () => (
     <div className="p-6 text-center bg-green-50 rounded-lg">
       <svg className="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
       </svg>
-      <h2 className="mt-4 text-xl font-semibold">¡Compra Exitosa!</h2>
+      <h2 className="mt-4 text-xl font-semibold">Purchase Successful!</h2>
       {transactionId && (
         <p className="mt-2 text-sm text-gray-600">
-          ID de Transacción: <span className="font-mono">{transactionId}</span>
+          Transaction ID: <span className="font-mono">{transactionId}</span>
         </p>
       )}
       <p className="mt-2 text-gray-600">
-        Nuevo saldo: <span className="font-semibold">${userBalance.toFixed(2)}</span>
+        New balance: <span className="font-semibold">${userBalance.toFixed(2)}</span>
       </p>
-      <p className="mt-4 text-gray-600">Redirigiendo a tu historial...</p>
+      <p className="mt-4 text-gray-600">Redirecting to your purchase history...</p>
     </div>
   );
 
-  // Componente: Resumen del Carrito
   const renderCartSummary = () => (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Detalles de la Compra</h2>
+      <h2 className="text-lg font-semibold mb-4">Order Details</h2>
       <div className="space-y-4">
         {cartItems?.map(item => (
           <div key={item.id} className="flex justify-between items-center border-b pb-3">
@@ -203,24 +194,23 @@ const CheckoutPage = () => {
     </div>
   );
 
-  // Componente: Sección de Pago
   const renderPaymentSection = () => (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Método de Pago</h2>
-      
+      <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
+
       <div className="bg-blue-50 p-4 rounded-lg mb-6">
         <div className="flex justify-between items-center mb-3">
-          <span className="font-medium">Saldo Disponible:</span>
+          <span className="font-medium">Available Balance:</span>
           <span className="text-blue-600 font-semibold">
             ${userBalance?.toFixed(2)}
           </span>
         </div>
-        
+
         <div className="relative pt-1">
           <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-100">
             <div
               className="flex flex-col justify-center bg-blue-500 transition-all duration-500"
-              style={{ 
+              style={{
                 width: `${Math.min((userBalance / cartTotal) * 100 || 0, 100)}%`,
                 height: '0.5rem'
               }}
@@ -238,14 +228,14 @@ const CheckoutPage = () => {
             : 'bg-blue-600 hover:bg-blue-700'
         }`}
       >
-        {loading ? 'Procesando...' : 'Confirmar Pago'}
+        {loading ? 'Processing...' : 'Confirm Payment'}
       </button>
     </div>
   );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8">Finalizar Compra</h1>
+      <h1 className="text-2xl font-bold mb-8">Checkout</h1>
 
       {errorMessage && (
         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
